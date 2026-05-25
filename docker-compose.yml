@@ -1,23 +1,39 @@
-version: '3.9'
-
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vigenere-app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/vigenere_db
+      DB_USERNAME: vigenere
+      DB_PASSWORD: vigenere
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
 
   postgres:
-
     image: postgres:16
-
     container_name: vigenere-postgres
-
     environment:
       POSTGRES_DB: vigenere_db
       POSTGRES_USER: vigenere
       POSTGRES_PASSWORD: vigenere
-
     ports:
       - "5432:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vigenere -d vigenere_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
 
 volumes:
   postgres_data:
